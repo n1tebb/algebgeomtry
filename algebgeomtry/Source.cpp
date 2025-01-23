@@ -1,15 +1,8 @@
-#include <iostream>
-#include <cmath>
-#include <Windows.h>
+#include "include.h"
 
 class Integer 
 {
-private:
-	bool sign_;
-	unsigned units_;
-
 public:
-	//Integer() :Integer(false, 0u) { } 
 	Integer():sign_(false), units_(0) { }
 	Integer(int value) 
 	{
@@ -86,25 +79,31 @@ public:
 		return (a + b) == 1;
 	}
 
-	unsigned NOD(unsigned a, unsigned b)
+	 Integer findNOD(const Integer& b)
 	{
-		while (a != 0 && b != 0)
+		unsigned x = getUnist();
+		unsigned y = b.getUnist();
+
+		while (x != 0 && y != 0)
 		{
-			if (a > b)
+			if (x > y)
 			{
-				a %= b;
-			} else
+				x %= y;
+			}
+			else
 			{
-				b %= a;
+				y %= x;
 			}
 		}
-		return a + b;
+		return Integer(x + y);
 	}
 
-	unsigned NOK(unsigned a, unsigned b)
+	 Integer findNOK( const Integer& b) 
 	{
-		unsigned nod = NOD(a, b);
-		return (a / nod) * b;
+		Integer nok =findNOD( b);
+		unsigned nokUnits = (getUnist() / nok.getUnist()) * b.getUnist();
+
+		return Integer(nokUnits);
 	}
 
 	int getValue() const
@@ -167,13 +166,112 @@ public:
 		return *this;
 	}
 
+	Integer& operator++()
+	{
+		if (sign_)
+		{
+			if (units_ > 0)
+			{
+				units_ -= 1;
+				if (units_ == 0) sign_ = false;
+			}
+		}
+		else {
+			units_ += 1;
+		}
+		return *this;
+	}
+
+	Integer operator++(int)
+	{
+		Integer temp(*this);
+		++(*this);
+		return temp;
+	}
+
+
+	Integer& operator--()
+	{
+		if (sign_)
+		{
+			units_ += 1;
+		}
+		else
+		{
+			if (units_ > 0)
+			{
+				units_ -= 1;
+				if (units_ == 0) sign_ = true;
+			}
+		}
+		return *this;
+	}
+
+	Integer operator--(int)
+	{
+		Integer temp(*this);
+		--(*this);
+		return temp;
+	}
+
+
+	friend std::ostream& operator<<(std::ostream& os, const Integer obj)
+	{
+		os << obj.getValue();
+		return os;
+	}
+
+
+
+private:
+	bool sign_;
+	unsigned units_;
+
+};
+
+class Rational
+{
+public:
+	Rational() : numerator_(0), denominator_(1){ }
+	Rational(const Integer& numerator, const Integer& denominator) : numerator_(numerator), denominator_(denominator){ }
+	
+	void reduce()
+	{
+		auto NOD = numerator_.findNOD(denominator_);
+		numerator_ = Integer(numerator_.getUnist()) / NOD;
+		denominator_ = Integer(denominator_.getUnist()) / NOD;
+	}
+
+	friend std::ostream& operator<<(std::ostream os, const Rational& obj)
+	{
+		os << obj.numerator_.getUnist() << "/" << obj.denominator_.getUnist();
+		return os;
+	}
+
+private:
+	Integer numerator_;
+	Integer denominator_;
+
 	
 };
 
+Rational::Rational()
+{
+}
+
+Rational::~Rational()
+{
+}
+
 int main() 
 {
+	SetConsoleCP(1251);
+	SetConsoleOutputCP(1251);
 	Integer a(15);
 	Integer b(20);
+
+	std::cout << "исходные числа:\n";
+	std::cout << "a: " << a << ", b: " << b << "\n\n";
 
 	std::cout << "a - четное: " << !a.isOdd() << "\n";
 	std::cout << "b - четное: " << !b.isOdd() << "\n\n";
@@ -192,6 +290,25 @@ int main()
 
 	std::cout << "a и b - взаимопростые: " << a.isVzaimProstoe(b) << "\n\n";
 
-	unsigned nod = a.NOD(a.getUnist(), b.getUnist());
 
+	Integer nod = a.findNOD(b);
+	Integer nok = a.findNOK(b);
+
+	std::cout << "НОД a и b - " << nod << "\n";
+	std::cout << "НОК a и b - " << nok << "\n\n";
+
+	std::cout << "инкремент и декремент:\n";
+	std::cout << "++a: " << ++a << "\n";
+	std::cout << "a++: " << a++ << ", a стало = " << a << "\n";
+	std::cout << "--a: " << --a << "\n";
+	std::cout << "a--: " << a-- << ", a стало = " << a << "\n\n";
+	std::cout << "++b: " << ++b << "\n";
+	std::cout << "b++: " << b++ << ", b стало = " << b << "\n";
+	std::cout << "--b: " << --b << "\n";
+	std::cout << "b--: " << b-- << ", b стало = " << b << "\n\n";
+
+	Rational r(a,b);
+	std::cout << "Дробь: " << r << "\n";
+
+	return 0;
 }
